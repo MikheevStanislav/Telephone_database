@@ -2,7 +2,7 @@ from typing import Any
 import os
 
 
-# Для начала создадим класс, который хранит из имен номера. Это будет Древо поиска, т.к пользователь может не знать
+# Для начала создадим класс, который хранит из имен номера. Это будет Древо поиска(префиксное дерево), т.к пользователь может не знать
 # имени искомого человека целиком. Если мы реализуем хранение пары имя -> номер то временная сложность при удобном
 # для пользователя способе(к примеру есть имена Артем, Анатолий, Борис, пользователь воодит А, программа выдает
 # Артема и Анатолия) ьудет O(N), а у дерева O(logN) P.S именно ради этой фичи нужен этот класс. Т.к. для пары телефон
@@ -10,9 +10,9 @@ import os
 class SearchTreeNode:
     def __init__(self, name=None, parent=None, person=None):
         self.name = name  # Имя конкретной ноды
-        self.parent = parent
+        self.parent = parent #отец ноды
         self.child = {}  # Хэштаблица всех сыновей ноды
-        self.person = person
+        self.person = person #объект класса person к которой эта нода принадлежит
         self.indexes = set()
 
 
@@ -60,6 +60,7 @@ class NameSearchTree:
                 else:
                     return [current]
 
+    #метод удаления ноды. Если нода не имеет братьев, ее отца также нужно удалить
     def delete(self, node: SearchTreeNode) -> bool:
         name = node.name
         ans = self.search(name)
@@ -77,7 +78,7 @@ class NameSearchTree:
             index = int(input()) - 1
             del ans[index].parent.child[ans[index].name[-1]]
 
-
+#класс человека, который вводит биекцию между комбинацией ФИО и 2 номерами телефона
 class Person:
     def __init__(self, name: SearchTreeNode, family_name: SearchTreeNode, fathers_name: SearchTreeNode,
                  organisation_name: SearchTreeNode, work_number: str, personal_number: str, index: int):
@@ -89,8 +90,9 @@ class Person:
         self.personal_number = personal_number
         self.index = index
 
-
+#класс таблицы. Хранит путь до объекта, массив людей, а также хэшмапы из номеров телефонов в людей
 class Table:
+    #при инициализации открывает путь до файла и считывает всю информацию из него в префиксные деервья и хэшмапы(для имени, фамилии, отчества свои префиксные деревья)
     def __init__(self, pathfile):
         self.organisations_tree = None
         self.pathfile = pathfile
@@ -116,6 +118,7 @@ class Table:
                 self.work_number_to_person[work_number] = self.persons_array[-1]
                 i += 1
 
+    #функция вставки данных
     def insert_data(self, name: str, family_name: str, fathers_name: str, organisation_name: str, work_number: str,
                     personal_number: str) -> Person:
         i = len(self.persons_array)
@@ -139,6 +142,7 @@ class Table:
             file.close()
         return new_person
 
+    #функция прочтения данных из person в массиве persons_array
     def read_data(self, index: int) -> None:
         print(str(index) + ":" + self.persons_array[index].family_name.name + " " + self.persons_array[
             index].name.name + " " +
@@ -147,10 +151,12 @@ class Table:
               self.persons_array[index].work_number + "      Домашний номер:" + self.persons_array[
                   index].personal_number)
 
+    #использование предыдущего метода на все элементы массива persons_array
     def read_all_data(self) -> None:
         for i in range(len(self.persons_array)):
             self.read_data(i)
 
+    #поиск person по хэшапам номеров
     def search_number(self, string: str) -> Person:
         if string in self.personal_number_to_person:
             return self.personal_number_to_person[string]
@@ -160,6 +166,7 @@ class Table:
             print("Такого номера не найдено в базе данных")
             return None
 
+    #поиск по префиксным деревьям
     def _search_name(self, string: str, mas=None) -> []:
         ans = []
         if string is None:
